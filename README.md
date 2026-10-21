@@ -1,11 +1,11 @@
-# XPAR PC 软件 · 完全版
+# XPAR PC workspace
 
-黑色基底、灰紫面板、薄荷绿色功能色的 Windows PC 界面原型。
+A single desktop-style workspace with switchable Exhibition and Full versions.
 
-在线预览：https://vincentzozo.github.io/xpar-pc-demo/
+- Use the edition selector in the title bar to switch versions.
+- English is the initial language. Chinese is shown after selecting 中文; the choice is remembered locally.
+- Device groups support creation, renaming, deletion, membership changes and filtering. Groups are shared between versions and saved locally.
+- Full version opens in user mode. Engineer sign-in uses engineer and any nonempty password for UI review; production authentication is not implemented.
+- The workspace currently contains preloaded records. Physical serial/Modbus communication is not implemented. Removing presentation labels does not turn these records into measurements.
 
-默认显示两台 X400 示例设备，以及2026-10-19至2026-10-21的静态示例读数、光谱与历史。所有示例数据均明确标注，点击顶部“示例数据”可切换为空设备视图。示例独立于本机实际记录；示例导出文件包含 EXAMPLE 标识。
-
-默认用户模式，无需登录。工程师入口账号 engineer，接受任意非空密码，仅用于原型评审；刷新后返回用户模式。示例模式不会下发设备维护、校准或固件指令。
-
-当前尚未接入真实串口/Modbus通信或正式账号认证。下载 index.html 可离线查看；支持示例CSV、Excel和光谱数据导出。
+Download index.html for offline viewing.
