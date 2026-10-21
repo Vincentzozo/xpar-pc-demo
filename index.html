@@ -892,7 +892,7 @@ function xparInstallChartTypography(){
   const box=svg.getBoundingClientRect(),sx=box.width/state.width,sy=box.height/state.height;
   if(!(sx>0&&sy>0))return;
   state.labels.forEach(({node,x,y})=>{
-   const baseline=Math.max(17,Math.min(box.height-6,y*sy));
+   const baseline=y===state.height-16?Math.max(17,box.height-31):Math.max(17,Math.min(box.height-6,y*sy));
    node.setAttribute('transform','matrix('+[1/sx,0,0,1/sy,x-x/sx,y-y/sy+(baseline-y*sy)/sy].join(' ')+')');
    node.style.setProperty('font-size','15px','important');
   });
