@@ -805,7 +805,7 @@ function xpCsv(rows){return '\ufeff'+rows.map(r=>r.map(v=>'"'+String(v??'').repl
 function xpDownload(name,data,type){let blob=data instanceof Blob?data:new Blob([data],{type:type||'text/plain;charset=utf-8'}),u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),2000)}
 function xpExport(kind='csv'){let rs=typeof xpExportSelected==='function'?xpExportSelected():xpRows(),keys=typeof xpExportKeys==='function'?xpExportKeys():['ppfd','temp','rh','co2','vpd','dew'];if(!rs.length||!keys.length)return toast('请选择有记录的时段和参数。');let rows=[['数据来源','设备','时间（UTC+08:00）',...keys.map(k=>xpName(k)+' ('+xpUnit(k)+')')],...rs.map(r=>['本地数据 / LOCAL',XP.devices.find(d=>d.id===r.id)?.sn||'',xpStamp(r.t),...keys.map(k=>r[k]==null?'':Number(xpVal(k,r[k]).replaceAll(',','')))])];if(kind==='csv')xpDownload('XPAR_'+XP.date+'.csv',xpCsv(rows),'text/csv;charset=utf-8');else xpDownload('XPAR_'+XP.date+'.xlsx',xpXlsx(rows));toast('文件已生成，请确认下载。')}
 function xpExportSpectrum(){let c=XP.spectra[XP.selected];xpDownload('XPAR_SPECTRUM.csv',xpCsv([['数据来源','波长 nm',c.unit],...c.values.map(p=>['LOCAL',p[0],p[1].toFixed(6)])]),'text/csv;charset=utf-8');toast('文件已生成，请确认下载。')}
-function xpSavePng(){let svg=document.querySelector('#main .xp-plot svg');if(!svg)return toast('当前页面没有可导出的图表');let clone=svg.cloneNode(true);clone.setAttribute('width','1020');clone.setAttribute('height',svg.viewBox.baseVal.height);let bg=document.createElementNS('http://www.w3.org/2000/svg','rect');bg.setAttribute('width','100%');bg.setAttribute('height','100%');bg.setAttribute('fill','#222328');clone.insertBefore(bg,clone.firstChild);clone.querySelectorAll('text').forEach(el=>{el.setAttribute('fill','#b1b3c2');el.setAttribute('font-family','Segoe UI,Arial');el.setAttribute('font-size','10')});let im=new Image(),u=URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(clone)],{type:'image/svg+xml'}));im.onload=()=>{let canvas=document.createElement('canvas');canvas.width=1020;canvas.height=Number(clone.getAttribute('height'))+24;let ctx=canvas.getContext('2d');ctx.fillStyle='#222328';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(im,0,0);ctx.font='12px Segoe UI';ctx.fillStyle='#00e5b5';ctx.fillText('XPAR · DEVICE RECORDS · '+XP.date+'',56,canvas.height-7);canvas.toBlob(b=>{if(b){let a=document.createElement('a'),url=URL.createObjectURL(b);a.href=url;a.download='XPAR_CHART.png';a.click();setTimeout(()=>URL.revokeObjectURL(url),2000)}URL.revokeObjectURL(u)},'image/png')};im.onerror=()=>{URL.revokeObjectURL(u);toast('图表导出失败，请重试。')};im.src=u}
+function xpSavePng(){let svg=document.querySelector('#main .xp-plot svg');if(!svg)return toast('当前页面没有可导出的图表');let clone=svg.cloneNode(true);let exportWidth=Math.round(svg.getBoundingClientRect().width),exportHeight=Math.round(svg.getBoundingClientRect().height);clone.setAttribute('width',exportWidth);clone.setAttribute('height',exportHeight);let bg=document.createElementNS('http://www.w3.org/2000/svg','rect');bg.setAttribute('width','100%');bg.setAttribute('height','100%');bg.setAttribute('fill','#222328');clone.insertBefore(bg,clone.firstChild);clone.querySelectorAll('text').forEach(el=>{el.setAttribute('fill','#b1b3c2');el.setAttribute('font-family','Segoe UI,Arial');el.setAttribute('font-size','10')});let im=new Image(),u=URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(clone)],{type:'image/svg+xml'}));im.onload=()=>{let canvas=document.createElement('canvas');canvas.width=exportWidth;canvas.height=exportHeight+24;let ctx=canvas.getContext('2d');ctx.fillStyle='#222328';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(im,0,0);ctx.font='12px Segoe UI';ctx.fillStyle='#00e5b5';ctx.fillText('XPAR · DEVICE RECORDS · '+XP.date+'',56,canvas.height-7);canvas.toBlob(b=>{if(b){let a=document.createElement('a'),url=URL.createObjectURL(b);a.href=url;a.download='XPAR_CHART.png';a.click();setTimeout(()=>URL.revokeObjectURL(url),2000)}URL.revokeObjectURL(u)},'image/png')};im.onerror=()=>{URL.revokeObjectURL(u);toast('图表导出失败，请重试。')};im.src=u}
 
 function xpXlsx(rows){let xmlEsc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));let col=i=>{let n=i+1,s='';while(n){n--;s=String.fromCharCode(65+n%26)+s;n=Math.floor(n/26)}return s};let sheet='<?xml version="1.0" encoding="UTF-8"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>'+rows.map((r,i)=>`<row r="${i+1}">`+r.map((v,j)=>v!=null&&typeof v==='number'&&Number.isFinite(v)?`<c r="${col(j)}${i+1}"><v>${v}</v></c>`:`<c r="${col(j)}${i+1}" t="inlineStr"><is><t xml:space="preserve">${xmlEsc(v)}</t></is></c>`).join('')+'</row>').join('')+'</sheetData></worksheet>';let files={'[Content_Types].xml':'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>','_rels/.rels':'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>','xl/workbook.xml':'<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="LOCAL" sheetId="1" r:id="rId1"/></sheets></workbook>','xl/_rels/workbook.xml.rels':'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>','xl/worksheets/sheet1.xml':sheet};let encoder=new TextEncoder(),parts=[],central=[],offset=0;let crcTable=Array.from({length:256},(_,n)=>{for(let k=0;k<8;k++)n=(n&1)?0xedb88320^(n>>>1):n>>>1;return n>>>0});let crc=buf=>{let c=0xffffffff;for(let x of buf)c=crcTable[(c^x)&255]^(c>>>8);return(c^0xffffffff)>>>0};function hdr(n,arr){let b=new Uint8Array(n),d=new DataView(b.buffer);for(let [off,val,len]of arr)len===4?d.setUint32(off,val,true):d.setUint16(off,val,true);return b}for(let[name,txt]of Object.entries(files)){let nb=encoder.encode(name),data=encoder.encode(txt),c=crc(data);let local=hdr(30,[[0,0x04034b50,4],[4,20,2],[6,0x800,2],[14,c,4],[18,data.length,4],[22,data.length,4],[26,nb.length,2]]);parts.push(local,nb,data);central.push(hdr(46,[[0,0x02014b50,4],[4,20,2],[6,20,2],[8,0x800,2],[16,c,4],[20,data.length,4],[24,data.length,4],[28,nb.length,2],[42,offset,4]]),nb);offset+=30+nb.length+data.length}let size=central.reduce((a,b)=>a+b.length,0),count=Object.keys(files).length;return new Blob([...parts,...central,hdr(22,[[0,0x06054b50,4],[8,count,2],[10,count,2],[12,size,4],[16,offset,4]])],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})}
 
@@ -882,7 +882,40 @@ async function uFullscreen(){try{if(document.fullscreenElement)await document.ex
 const uExportPage=renderExport;
 renderExport=function(){let html=uExportPage();if(tab==='report')return html;return html+panel('曲线预览',xpPlot('history',xpExportSelected(),['ppfd'],{height:230}),uiButton('保存曲线 PNG','xpSavePng()','small','capture'))};
 
+function xparInstallChartTypography(){
+ const chartStates=new Map();
+ let scheduled=false;
+ const resize=typeof ResizeObserver==='function'?new ResizeObserver(entries=>entries.forEach(entry=>fit(entry.target))):null;
+ function fit(svg){
+  const state=chartStates.get(svg);
+  if(!state||!svg.isConnected)return;
+  const box=svg.getBoundingClientRect(),sx=box.width/state.width,sy=box.height/state.height;
+  if(!(sx>0&&sy>0))return;
+  state.labels.forEach(({node,x,y})=>{
+   const baseline=Math.max(17,Math.min(box.height-6,y*sy));
+   node.setAttribute('transform','matrix('+[1/sx,0,0,1/sy,x-x/sx,y-y/sy+(baseline-y*sy)/sy].join(' ')+')');
+   node.style.setProperty('font-size','15px','important');
+  });
+ }
+ function scan(){
+  scheduled=false;
+  for(const [svg] of chartStates)if(!svg.isConnected){resize?.unobserve(svg);chartStates.delete(svg)}
+  document.querySelectorAll('.xp-plot svg').forEach(svg=>{
+   if(!chartStates.has(svg)){
+    const viewBox=svg.viewBox.baseVal;
+    chartStates.set(svg,{width:viewBox.width,height:viewBox.height,labels:[...svg.querySelectorAll('text')].map(node=>({node,x:Number(node.getAttribute('x'))||0,y:Number(node.getAttribute('y'))||0}))});
+    resize?.observe(svg);
+   }
+   fit(svg);
+  });
+ }
+ const observer=new MutationObserver(()=>{if(!scheduled){scheduled=true;requestAnimationFrame(scan)}});
+ observer.observe(document.getElementById('main'),{childList:true,subtree:true});
+ window.addEventListener('resize',()=>{if(!scheduled){scheduled=true;requestAnimationFrame(scan)}});
+ scan();
+}
 boot();
+xparInstallChartTypography();
 </script>
 
 <script id="xpar-i18n">
