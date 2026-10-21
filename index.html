@@ -787,7 +787,7 @@ function xpStats(rs,k){let v=rs.map(r=>r[k]).filter(Number.isFinite);if(!v.lengt
 function xpSummary(label,value,unitText='',note=''){return '<div class="statcard"><div class="statlabel">'+label+'</div><div class="statnum">'+value+'<em>'+unitText+'</em></div><div class="statnote">'+note+'</div></div>'}
 function xpTable(heads,rows){return '<div class="tablewrap"><table><thead><tr>'+heads.map(h=>'<th scope="col">'+h+'</th>').join('')+'</tr></thead><tbody>'+rows.map(row=>'<tr>'+row.map(cell=>'<td>'+cell+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>'}
 function xpPlot(kind,rs=[],keys=['ppfd'],opts={}){
- let spectral=kind==='spectrum',normalized=!!opts.normalized,W=1020,H=opts.height||300,L=74,R=(!spectral&&keys.length>1?74:26),T=32,B=48,iw=W-L-R,ih=H-T-B,uid='xp-'+kind+'-'+(xpPlot.serial=(xpPlot.serial||0)+1);
+ let spectral=kind==='spectrum',normalized=!!opts.normalized,W=1020,H=opts.height||300,L=74,R=(!spectral&&keys.length>1?74:26),T=32,B=64,iw=W-L-R,ih=H-T-B,uid='xp-'+kind+'-'+(xpPlot.serial=(xpPlot.serial||0)+1);
  let cs=spectral?(opts.curves||[XP.spectra[XP.selected]]):keys.map(k=>({name:xpName(k),unit:xpUnit(k),values:rs.map(r=>[r.t,typeof displayVal==='function'?displayVal(k,r[k]):r[k]]),key:k}));
  if(!cs.length||!cs[0].values.length)return uiPlot('暂无测量记录','该时段没有记录。',kind);
  let xlo=spectral?350:cs[0].values[0][0],xhi=spectral?850:cs[0].values.at(-1)[0];if(xhi===xlo)xhi++;
